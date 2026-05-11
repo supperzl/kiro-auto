@@ -2294,7 +2294,7 @@ export async function autoRegisterAWS(
         if (!keptBrowser || !keptContext || !keptPage) {
           throw new Error('浏览器会话不存在，无法继续 PRO 检测')
         }
-        log('✓ 保留当前注册浏览器，继续打开 Kiro 做 PRO 检测')
+        log('✓ 保留当前注册浏览器，继续打开 Kiro 获取账号信息')
         browser = null
         context = null
         page = null

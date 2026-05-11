@@ -274,11 +274,11 @@ KIRO_RS_PRIORITY=0
 
 注册成功后的链路：
 
-普通链路：`AWS Builder ID 注册完成` -> `轮询 device auth 拿 refreshToken/clientId/clientSecret` -> `POST /api/admin/credentials` 上传到 kiro.rs。
+普通链路：`AWS Builder ID 注册完成` -> `轮询 device auth 拿 refreshToken/clientId/clientSecret` -> `复用注册浏览器打开 Kiro 捕获 profileArn` -> `POST /api/admin/credentials` 上传到 kiro.rs。
 
 开启 PRO 检测时的临时链路：`AWS Builder ID 注册完成` -> `保留当前浏览器继续打开 Kiro` -> `检测 Kiro PRO 试用资格` -> `停止`。付款和发布 kiro.rs 等后续步骤待开发。
 
-上传请求使用 `x-api-key: KIRO_RS_ADMIN_KEY`，payload 为 Builder ID 授权；脚本不会把 `refreshToken/clientSecret` 写入本地文件。
+上传请求使用 `x-api-key: KIRO_RS_ADMIN_KEY`，payload 为 Builder ID 授权并包含 Kiro `profileArn`；脚本不会把 `refreshToken/clientSecret` 写入本地文件。
 
 ## 项目结构
 

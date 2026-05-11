@@ -22,6 +22,7 @@ export type BuilderIdCredential = {
   refreshToken: string
   clientId: string
   clientSecret: string
+  profileArn?: string
   region: string
   email?: string
 }
@@ -96,6 +97,7 @@ export class KiroRsAdminClient {
       refreshToken: credential.refreshToken,
       clientId: credential.clientId,
       clientSecret: credential.clientSecret,
+      profileArn: credential.profileArn,
       authMethod: options.authMethod || 'IdC',
       provider: options.provider || 'BuilderId',
       priority: options.priority ?? 0,

@@ -456,6 +456,40 @@ async function detectProTrialEligibilityWithFallback(
   return detectProTrialEligibility(opts, taskLog, taskEmail, taskPassword)
 }
 
+async function captureKiroProfileArnForUpload(
+  opts: CliOptions,
+  taskLog: (message: string) => void,
+  email: string | undefined,
+  password: string | undefined,
+  browserSession: RegistrationBrowserSession | undefined,
+): Promise<string> {
+  if (!email || !password) {
+    throw new Error('缺少注册邮箱或密码，无法登录 Kiro 获取 profileArn')
+  }
+
+  const logger = createEventLogger(opts.proEventsPath)
+  let kiro: KiroClient | null = null
+  try {
+    taskLog('上传 kiro.rs 前打开 Kiro 获取 profileArn')
+    kiro = new KiroClient({
+      profileDir: opts.proProfileDir,
+      headless: opts.headless,
+      logger,
+      freshProfile: browserSession ? false : !opts.proReuseProfile,
+      artifactDir: `${resolve('.')}/artifacts`,
+      credentials: { email, password },
+      existingContext: browserSession?.context,
+      existingPage: browserSession?.page,
+      closeExistingContext: false,
+    })
+    const session = await kiro.ensureSession()
+    taskLog(`✓ 已获取 Kiro profileArn: ${session.profileArn}`)
+    return session.profileArn
+  } finally {
+    await kiro?.close().catch(() => undefined)
+  }
+}
+
 async function saveJson(path: string, data: unknown): Promise<void> {
   const { mkdir, writeFile } = await import('node:fs/promises')
   const { dirname } = await import('node:path')
@@ -543,7 +577,7 @@ async function runRegistration(opts: CliOptions): Promise<{ ok: number; fail: nu
         verificationUri: start.verificationUri,
         useFingerprint: opts.useFingerprint,
         headless: opts.headless,
-        keepBrowserOpen: opts.autoProTrial
+        keepBrowserOpen: opts.autoProTrial || opts.publishKiroRs
       })
 
       let uploadedToKiroRs = false
@@ -613,10 +647,18 @@ async function runRegistration(opts: CliOptions): Promise<{ ok: number; fail: nu
             apiKey: opts.kiroRsKey,
             log: (message) => log(message)
           })
+          const profileArn = await captureKiroProfileArnForUpload(
+            opts,
+            log,
+            result.email,
+            result.password,
+            result.browserSession,
+          )
           const upload = await admin.addBuilderIdCredential({
             refreshToken,
             clientId,
             clientSecret,
+            profileArn,
             region: opts.region,
             email: result.email
           }, {
